@@ -1,5 +1,5 @@
 <html>
-	<head class="header">
+	<head>
 		<title>Spotify Andela</title>
 
     <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
@@ -12,12 +12,11 @@
 	<div class="body">
 		<div class="topic">
 			<div class="jumbotron">
-				<img src= "logo.jpg" title="spotify logo"> </img>
+				<img src= "logo.jpg" title="spotify logo" align="middle"> </img>
 				<div class="title text-shadow">
 					<div class="jumbotron"><h1>Welcome to my <br/> <br/> Spotify assignment</h1></div>
 				</div>
-			<p> Its supposed to display the list of <strong>artists</strong>  on spotify <br/>
-                according to years since <em> 2012</em>
+			<p> Its supposed to display the list of <strong>artists</strong> according to years since <em> 2001</em>
 		</div>
 	</div>
 
@@ -37,7 +36,16 @@
             type (type of query, in this case - artists)
             query (in this case, year rankings)
             limit (the number of results to show per query/page)
-            market (United States)  */
+            market (United States)
+
+        here, global variables maintained are offValue (for the offset), yearOn (for the year chosen), currentPage (for page user is on),
+        and limitPerPage (number of entries to show per page)
+
+        the freshPick function is called each time the user selects a year to show.
+        the nextPage function is called each time the user tries to move to the next page of a particular year
+        the prevPage function is called each time the user tries to move to the previous page of a particular year
+
+    */
         var offValue = 0;                         //
         var yearOn = year;                        //             default
         var currentPage = 1;                      //             values
@@ -63,7 +71,16 @@
         function showValues(year, limitPerPage){
             var query = 'year:'+year;                       // q parameter for the API
 
-            /*
+            /* Ajax call to retrieve values of query
+            *    usually in the format:
+            *       $.ajax({
+            *           url: xx,
+            *           data: xx,
+            *           success: function(e){
+            *           },
+            *           error: function(e){
+            *           },
+            *       });
             *     The success function is run if retrieval is successfully
             *     The error function is run if retrieval fails
             */
@@ -77,6 +94,13 @@
                     market: "US"                            // market parameter
                 },
 
+                //this function is called if values of query are successfully retrieved
+                //data is usually passed in, and holds values received
+                // study the raw data obtained from - https://api.spotify.com/v1/search?q=year%3A2001&type=artist&market=US
+                // copy values to a text editor to understand better
+                // the results are in the form:
+                //  {artists: {href: xx, items: [{external_urls, followers, name, genres, popularity, type, images, etc}, ...], limit: xx, next: xx, offset: xx, previous: xx, total: xx}}
+                //
                 // each artist data is stored in the items list, so to retrieve each data, you have to loop over the items list, which is nested as an element in the artists list/dictionary
                 // the total number of results is stored in the artists list/dictionary
                 // to access these elements in the list, I started from the root - jsonData
@@ -98,14 +122,28 @@
                     // if number of pages is above 1, it becomes previous + next
                     // else if it's 1, it becomes just next
 
+                    pagination += '<a href="javascript:nextPage('+ limitPerPage + ')">Next</a><br />'
 
-                        pagination += '<a href="javascript:nextPage('+ limitPerPage + ')" class = "next">Next</a><br />'
+                    // js code to add text to existing div element
+                    // found it online
+                    // format is $(textToAdd).appendTo(('#idOfElement').html(''));
+                    // where textToAdd is the raw string to add to the element, and idOfElement is the id of the element. note the # added in front of the id
 
 
-                    var table = $('<p>Page ' + currentPage + 'of ' + totalPages + '<p>' + pagination + '<br /><table align="center" border="1" width="60%" id="tab"><thead><th>Name</th><th>Popularity</th><th>Type</th><th>Images</th><th>Genre</th></thead><tbody></tbody></table><br />').appendTo($('#rankings').html(''));
+                    // the value is stored to table because it still needs to accessed to isolate the table body
+                    var table = $('<p>Page ' + currentPage + 'of ' + totalPages + '<p>' + pagination + '<br /><table align="center" border="1" width="60%"><thead><th>Name</th><th>Popularity</th><th>Type</th><th>Images</th><th>Genre</th></thead><tbody></tbody></table><br />').appendTo($('#rankings').html(''));
 
-                            // isolate the table body so we can add items directly here while looping
+                    // isolate the table body so we can add items directly here while looping
                     var tbody = table.find('tbody');
+
+                    // js code to loop thru items in the items list.
+                    // format is:
+                    //      $(list).each(function(){
+                    //      });
+                    // where list is the list on which to loop over
+                    // While looping, the items list returns a list each time. So to access elements of that list, I used - this
+                    // To access name of artist for example, I used this.name. I could also have used this[name].
+                    // Would still give same results
 
                     $(jsonData.artists.items).each(function(){
                         tbody.append('<tr>')
@@ -135,11 +173,10 @@
         }
     </script>
 
-<h2>Site  is still in construction</h2>
+<h2>Site in construction</h2>
 
 
-<img src= "http://static1.squarespace.com/static/53151429e4b0f6aa70876c6f/t/5364166ee4b08700007d8099/1399068324534/thankyou.png?format=300w"> Thank You </p>
-
+<p> Thank You
 
 
 	</div>
