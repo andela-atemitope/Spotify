@@ -1,0 +1,145 @@
+<html>
+	<head>
+		<title>Spotify Andela</title>
+
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Tangerine">
+  <link rel="stylesheet" type="text/css" href="mystyle.css" />
+	</head>
+<body  class= "overallbody" height= 100%>
+
+	<div class="body">
+		<div class="topic">
+			<div class="jumbotron">
+				<img src= "logo.jpg" title="spotify logo"> </img>
+				<div class="title text-shadow">
+					<div class="jumbotron"><h1>Welcome to my <br/> <br/> Spotify assignment</h1></div>
+				</div>
+			<p> Its supposed to display the list of <strong>artists</strong>  on spotify <br/>
+                according to years since <em> 2012</em>
+		</div>
+	</div>
+
+    <div align="center">
+	<button onclick="freshPick('2012', 10)"><p class= "buttontext">artists in 2012 </p></button>
+	<button onclick="freshPick('2013', 10)"><p class= "buttontext"> artists in 2013 </p></button>
+	<button onclick="freshPick('2014', 10)"><p class= "buttontext"> artists in 2014 </p></button>
+	<button onclick="freshPick('2015', 10)"><p class= "buttontext">artists in 2015 </p></button>
+    <div>
+    <br /><br />
+    <span id="rankings"></span>
+
+
+    <script>
+    /* The Sp0tify API accepts query parameters -
+            offSet (the index to which to start the returned results from)
+            type (type of query, in this case - artists)
+            query (in this case, year rankings)
+            limit (the number of results to show per query/page)
+            market (United States)  */
+        var offValue = 0;                         //
+        var yearOn = year;                        //             default
+        var currentPage = 1;                      //             values
+        var limitPerPage = 10;                    //
+
+        function freshPick(year, limitPerPage){
+            offValue = 0;                           // initialize the offset to 0 each time the user clicks a new year
+            yearOn = year;                          //  store the year chosen
+            currentPage = 1;                        // initialize to page 1 for each new year
+            showValues(year, limitPerPage);
+        }
+
+        function nextPage(limitPerPage){
+            offValue += limitPerPage;               // increase offset by 10 for each new page, so as to bring up the next 10 results`
+            showValues(yearOn, limitPerPage);       //  modify table
+            currentPage += 1;                       //  increment page count
+        }
+        function prevPage(limitPerPage){
+            offValue -= limitPerPage;               //
+            showValues(yearOn, limitPerPage);       //      opposite actions of nextPage
+            currentPage -= 1;                       //
+        }
+        function showValues(year, limitPerPage){
+            var query = 'year:'+year;                       // q parameter for the API
+
+            /*
+            *     The success function is run if retrieval is successfully
+            *     The error function is run if retrieval fails
+            */
+            $.ajax({
+                url: 'https://api.spotify.com/v1/search',   // api url
+                data: {
+                    q: query,                               // q parameter using query variable
+                    type: "artist",                         // type parameter
+                    offset: offValue,                       // offset parameter
+                    limit: limitPerPage,                    // limit parameter
+                    market: "US"                            // market parameter
+                },
+
+                // each artist data is stored in the items list, so to retrieve each data, you have to loop over the items list, which is nested as an element in the artists list/dictionary
+                // the total number of results is stored in the artists list/dictionary
+                // to access these elements in the list, I started from the root - jsonData
+                // so to access the artists list - jsonData.artists
+                // to access the items list which is an element of artists - jsonData.artists.items
+                // to access the total number which is an element of artists - jsonData.artists.total
+
+                success: function (data){
+                    var jsonData = data;            // store values to local variable
+                    var totalPages = Math.floor(jsonData.artists.total / limitPerPage);  // get total pages, by dividing total number by views per page
+                    var prevPage = '<br /><a href="javascript:prevPage('+ limitPerPage + ')">Previous</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'  // string to display link for previous page
+                    if (currentPage > 1)
+                        var pagination = prevPage;  // if number of pages is above 1, and it's possible to go back (previous)
+                    else
+                        var pagination = '';        // if number of pages is 1, and it's not possible to go back (previous)
+
+
+                    // add link to go to next page to value for pagination
+                    // if number of pages is above 1, it becomes previous + next
+                    // else if it's 1, it becomes just next
+
+                    pagination += '<a href="javascript:nextPage('+ limitPerPage + ')">Next</a><br />'
+
+                    var table = $('<p>Page ' + currentPage + 'of ' + totalPages + '<p>' + pagination + '<br /><table align="center" border="1" width="60%"><thead><th>Name</th><th>Popularity</th><th>Type</th><th>Images</th><th>Genre</th></thead><tbody></tbody></table><br />').appendTo($('#rankings').html(''));
+
+                    // isolate the table body so we can add items directly here while looping
+                    var tbody = table.find('tbody');
+
+                    $(jsonData.artists.items).each(function(){
+                        tbody.append('<tr>')
+                        tbody.append('<td>'+this.name+'</td>');             // access name
+                        tbody.append('<td>'+this.popularity+'</td>');       // access popularity
+                        tbody.append('<td>'+this.type+'</td>');             // access type
+
+                        // spotify returns three or more images which vary depending on size/quality, the images are returned as a list
+                        // the image list returns height, width, and url for each image in the list
+                        // the last image in the image list is the smallest
+                        // so I accessed the last image, and displayed using the attributes supplied by the query (height, width, url)
+
+                        var last = this.images.length - 1                   // get the last offset of the images list.
+
+                        tbody.append('<td>'+'<img height='+this.images[last].height+' width='+this.images[last].width+' src='+this.images[last].url+' />'+'</td>'); // append image to table
+                        tbody.append('<td>'+this.genres+'</td></tr>');
+                    });
+
+                    yearOn = year;   // store year variable, so it's retained while going next or previous
+                },
+
+                // if errors occur while retrieving
+                error:  function(error) {
+                    alert("Error occurred while retrieving values!");
+                }
+            });
+        }
+    </script>
+
+<h2>Site  is still in construction</h2>
+
+
+<p> Thank You </p>
+
+
+	</div>
+
+</body>
+</html>
